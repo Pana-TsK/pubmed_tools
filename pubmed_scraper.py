@@ -3,6 +3,26 @@ import json
 import re
 from typing import List, Dict
 
+class Article:
+    def __init__(self, title : str, keywords: list[str], abstract: str, doi: str, related_dois : list[str]):
+        self.title = title
+        self.keywords = keywords
+        self.abstract = abstract
+        self.doi = doi
+        self.related_dois = related_dois
+    
+    def __repr__(self):
+        return f"Article(title={self.title}, doi={self.doi})"
+
+    def to_dict(self):
+        return {
+            'title' : self.title,
+            'keywords' : self.keywords,
+            'absract' : self.abstract,
+            'doi': self.doi,
+            'related dois' : self.related_dois
+        }
+
 class PubMedClient:
     """A class for querying PubMed and processing results."""
     
@@ -24,41 +44,21 @@ class PubMedClient:
         """
         try:
             raw_results = self.pubmed.query(term, max_results=max_results)
-            self.results = [
-                {
-                    'title': self.clean_html_tags(item.get('title', 'No title available')),
-                    'keywords': item.get('keywords', 'No keywords available'),
-                    'abstract': item.get('abstract', 'No abstract available'),
-                    'doi': item.get('doi', 'No DOI available').split()[0]
-                }
-                for item in (article.toDict() for article in raw_results)
-            ]
+
+            self.results = []
+            for article in raw_results:
+                title=self.clean_html_tags(article.title if article.title else 'No title available'),
+                keywords=article.keywords if article.keywords else [],
+                abstract=article.abstract if article.abstract else 'No abstract available',
+                doi= str(article.doi.split()[0]) if article.doi else 'No DOI available',
+                related_dois=article.doi.split()[1:] if article.doi else []
+
+            
+                self.results.append(Article(title, keywords, abstract, doi, related_dois))
+
         except Exception as e:
             print(f"Error during PubMed query: {e}")
             self.results = []
-    
-    def write_to_txt(self, filename: str) -> bool:
-        """
-        Writes the results to a text file.
-        
-        Args:
-            filename (str): Output filename.
-        
-        Returns:
-            bool: True if successful, False otherwise.
-        """
-        try:
-            with open(filename, 'w', encoding='utf-8') as file:
-                for i, pub in enumerate(self.results, start=1):
-                    file.write(f"{i}\n")
-                    file.write(f"Title: {pub['title']}\n")
-                    file.write(f"DOI: {pub['doi']}\n")
-                    file.write(f"Abstract: {pub['abstract']}\n")
-                    file.write("-" * 30 + "\n")
-            return True
-        except Exception as e:
-            print(f"Error writing to text file: {e}")
-            return False
     
     def write_to_json(self, filename: str) -> bool:
         """
@@ -70,9 +70,10 @@ class PubMedClient:
         Returns:
             bool: True if successful, False otherwise.
         """
+        result_dicts = [article.to_dict() for article in self.results]
         try:
             with open(filename, "w", encoding='utf-8') as outfile:
-                json.dump(self.results, outfile, indent=4)
+                json.dump(result_dicts, outfile, indent=4)
             return True
         except Exception as e:
             print(f"Error writing to JSON file: {e}")
