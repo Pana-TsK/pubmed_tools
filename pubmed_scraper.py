@@ -4,12 +4,13 @@ import re
 from typing import List, Dict
 
 class Article:
-    def __init__(self, title : str, keywords: list[str], abstract: str, doi: str, related_dois : list[str]):
+    def __init__(self, title : str, keywords: list[str], abstract: str, doi: str, related_dois : list[str], pmid : str):
         self.title = title
         self.keywords = keywords
         self.abstract = abstract
         self.doi = doi
         self.related_dois = related_dois
+        self.pmid = pmid
     
     def __repr__(self):
         return f"Article(title={self.title}, doi={self.doi})"
@@ -20,7 +21,8 @@ class Article:
             'keywords' : self.keywords,
             'absract' : self.abstract,
             'doi': self.doi,
-            'related dois' : self.related_dois
+            'related dois' : self.related_dois,
+            'pmid': self.pmid
         }
 
 class PubMedClient:
@@ -51,10 +53,11 @@ class PubMedClient:
                 keywords=article.keywords if article.keywords else [],
                 abstract=article.abstract if article.abstract else 'No abstract available',
                 doi= str(article.doi.split()[0]) if article.doi else 'No DOI available',
-                related_dois=article.doi.split()[1:] if article.doi else []
+                related_dois=article.doi.split()[1:] if article.doi else [],
+                pmid = article.pubmed_id.split()[0] if article.pubmed_id else 'No PMID available'
 
             
-                self.results.append(Article(title, keywords, abstract, doi, related_dois))
+                self.results.append(Article(title, keywords, abstract, doi, related_dois, pmid))
 
         except Exception as e:
             print(f"Error during PubMed query: {e}")
