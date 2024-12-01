@@ -1,7 +1,7 @@
 from Bio import Entrez
 
 # Set your email for Entrez (required)
-Entrez.email = "panagiotis.tsampanis47@gmail.com"
+Entrez.email = ""
 
 def get_pmc_pdf(pmid):
     """
